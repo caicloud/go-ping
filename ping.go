@@ -48,8 +48,6 @@ import (
 	"math"
 	"math/rand"
 	"net"
-	"os"
-	"os/signal"
 	"sync"
 	"syscall"
 	"time"
@@ -286,14 +284,9 @@ func (p *Pinger) run() {
 
 	timeout := time.NewTicker(p.Timeout)
 	interval := time.NewTicker(p.Interval)
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
 
 	for {
 		select {
-		case <-c:
-			close(p.done)
 		case <-p.done:
 			wg.Wait()
 			return
@@ -327,6 +320,11 @@ func (p *Pinger) finish() {
 		s := p.Statistics()
 		handler(s)
 	}
+}
+
+// Shutdown stops the running pinger
+func (p *Pinger) Shutdown() {
+	close(p.done)
 }
 
 // Statistics returns the statistics of the pinger. This can be run while the
